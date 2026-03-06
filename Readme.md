@@ -1,0 +1,1 @@
+# Auto configurator for Rockwell Wall Stratix devices
