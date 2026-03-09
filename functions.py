@@ -1,3 +1,6 @@
+import os
+
+from os import path
 from netmiko import ConnectHandler
 
 def check_difference_config_backup(stratix_backup: str, network_device:dict) -> tuple:
@@ -53,3 +56,37 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
             code_error = 1
 
     return (response_config==backup_file, code_error)
+
+
+def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups") -> tuple:
+    """
+    Generate the dropdown menus for the Stratix Configurator app
+
+    Args:
+        source folder (str): The absolute path to the folder where backup config files are located
+
+    Returns:
+        A tuple containing:
+            list(str): list with the names of all the Stratix devices with a backup in this folder
+            list(dict): list with the netmiko object structure for each of the Stratix switches
+
+    """
+
+    ip_mapper = {
+        "STX09": "192.168.3.209",
+        "STX06": "192.168.3.210",
+        "STX07": "192.168.3.211",
+        "STX08": "192.168.3.212",
+        "STX12": "192.168.3.206",
+        "STX13": "192.168.3.207"
+    }
+
+    backup_files = [file for file in os.listdir(source_folder)]
+    stratix_names = [name[:5] for name in backup_files]
+
+    netmiko_structures = [{'device_type': 'cisco_ios',
+                           'host': ip_mapper[name],
+                           'username': 'admin',
+                           'password': 'Rockwell123'} for name in stratix_names]
+    
+    return (stratix_names, netmiko_structures)
