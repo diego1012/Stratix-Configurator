@@ -59,12 +59,14 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
     return (response_config==backup_file, code_error)
 
 
-def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups") -> tuple:
+def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups", username=None, password=None) -> tuple:
     """
     Generate the dropdown menus for the Stratix Configurator app
 
     Args:
         source folder (str): The absolute path to the folder where backup config files are located
+        username: Switch login username
+        password: Switch login password
 
     Returns:
         A tuple containing:
@@ -89,9 +91,16 @@ def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups") -> tu
     backup_files = [file for file in os.listdir(source_folder) if re.fullmatch(filename_pattern, file)!=None]
     stratix_names = [name[:5] for name in backup_files]
 
+    if username==None and password==None:
+        switch_username = os.environ['STX_USER']
+        switch_password = os.environ['STX_PWD']
+    else:
+        switch_username = username
+        switch_password = password
+
     netmiko_structures = [{'device_type': 'cisco_ios',
                            'host': ip_mapper[name],
-                           'username': os.environ['STX_USER'],
-                           'password': os.environ['STX_PWD']} for name in stratix_names]
+                           'username': switch_username,
+                           'password': switch_password} for name in stratix_names]
     
     return (stratix_names, netmiko_structures)
