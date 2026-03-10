@@ -1,4 +1,5 @@
 import os
+import re
 
 from os import path
 from netmiko import ConnectHandler
@@ -58,12 +59,14 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
     return (response_config==backup_file, code_error)
 
 
-def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups") -> tuple:
+def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups", username=None, password=None) -> tuple:
     """
     Generate the dropdown menus for the Stratix Configurator app
 
     Args:
         source folder (str): The absolute path to the folder where backup config files are located
+        username: Switch login username
+        password: Switch login password
 
     Returns:
         A tuple containing:
@@ -73,7 +76,9 @@ def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups") -> tu
     """
 
     ip_mapper = {
-        "STX09": "192.168.3.209",
+        "STX02": "192.168.3.213",
+        "STX04": "192.168.3.215",
+        "STX05": "192.168.3.209",
         "STX06": "192.168.3.210",
         "STX07": "192.168.3.211",
         "STX08": "192.168.3.212",
@@ -81,12 +86,21 @@ def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups") -> tu
         "STX13": "192.168.3.207"
     }
 
-    backup_files = [file for file in os.listdir(source_folder)]
+    filename_pattern = re.compile(r'STX\d{2}(-ASA|)backup')
+
+    backup_files = [file for file in os.listdir(source_folder) if re.fullmatch(filename_pattern, file)!=None]
     stratix_names = [name[:5] for name in backup_files]
+
+    if username==None and password==None:
+        switch_username = os.environ['STX_USER']
+        switch_password = os.environ['STX_PWD']
+    else:
+        switch_username = username
+        switch_password = password
 
     netmiko_structures = [{'device_type': 'cisco_ios',
                            'host': ip_mapper[name],
-                           'username': 'admin',
-                           'password': 'Rockwell123'} for name in stratix_names]
+                           'username': switch_username,
+                           'password': switch_password} for name in stratix_names]
     
     return (stratix_names, netmiko_structures)
