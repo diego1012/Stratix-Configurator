@@ -91,7 +91,7 @@ def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups") -> tu
 
     netmiko_structures = [{'device_type': 'cisco_ios',
                            'host': ip_mapper[name],
-                           'username': 'admin',
-                           'password': 'Rockwell123'} for name in stratix_names]
+                           'username': os.environ['STX_USER'],
+                           'password': os.environ['STX_PWD']} for name in stratix_names]
     
     return (stratix_names, netmiko_structures)
