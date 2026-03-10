@@ -1,6 +1,7 @@
 import os
 
 from os import path
+from sqlite3 import connect
 from netmiko import ConnectHandler
 
 def check_difference_config_backup(stratix_backup: str, network_device:dict) -> tuple:
@@ -51,6 +52,7 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
             message = 'show run'    
             response_config = connect.send_command(message).split("\n")
             response_config = "\n".join(response_config[6:])
+            connect.disconnect()
 
         except Exception as e:
             code_error = 1
@@ -59,6 +61,7 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
 
 
 def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups") -> tuple:
+
     """
     Generate the dropdown menus for the Stratix Configurator app
 
@@ -73,7 +76,9 @@ def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups") -> tu
     """
 
     ip_mapper = {
-        "STX09": "192.168.3.209",
+        "STX02": "192.168.3.213",
+        "STX04": "192.168.3.215",
+        "STX05": "192.168.3.209",
         "STX06": "192.168.3.210",
         "STX07": "192.168.3.211",
         "STX08": "192.168.3.212",
@@ -90,3 +95,17 @@ def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups") -> tu
                            'password': 'Rockwell123'} for name in stratix_names]
     
     return (stratix_names, netmiko_structures)
+
+def load_configuration(stratix_file: str, network_device: dict) -> bool:
+
+    try:
+        connect = ConnectHandler(**network_device)
+        connect.enable()
+
+        command = connect.send_config_from_file(config_file=stratix_file)
+        
+        connect.disconnect()
+        return True
+    
+    except Exception as e:
+        return False
