@@ -1,4 +1,5 @@
 import os
+import re
 
 from os import path
 from netmiko import ConnectHandler
@@ -73,7 +74,9 @@ def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups") -> tu
     """
 
     ip_mapper = {
-        "STX09": "192.168.3.209",
+        "STX02": "192.168.3.213",
+        "STX04": "192.168.3.215",
+        "STX05": "192.168.3.209",
         "STX06": "192.168.3.210",
         "STX07": "192.168.3.211",
         "STX08": "192.168.3.212",
@@ -81,7 +84,9 @@ def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups") -> tu
         "STX13": "192.168.3.207"
     }
 
-    backup_files = [file for file in os.listdir(source_folder)]
+    filename_pattern = re.compile(r'STX\d{2}(-ASA|)backup')
+
+    backup_files = [file for file in os.listdir(source_folder) if re.fullmatch(filename_pattern, file)!=None]
     stratix_names = [name[:5] for name in backup_files]
 
     netmiko_structures = [{'device_type': 'cisco_ios',
