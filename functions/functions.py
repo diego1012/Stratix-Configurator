@@ -2,7 +2,6 @@ import os
 import re
 
 from os import path
-from sqlite3 import connect
 from netmiko import ConnectHandler
 
 def check_difference_config_backup(stratix_backup: str, network_device:dict) -> tuple:
@@ -30,6 +29,8 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
     response_config = "-"
     code_error = 0
 
+    print(stratix_backup)
+    
     # Read backup file
     try:
         with open(stratix_backup, 'r', encoding='utf-8') as f:
@@ -61,7 +62,8 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
     return (response_config==backup_file, code_error)
 
 
-def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups", username=None, password=None) -> tuple:
+def generate_dropdowns(source_folder=r"C:\Users\Test\Desktop\Backups", username=None, password=None) -> tuple:
+
     """
     Generate the dropdown menus for the Stratix Configurator app
 
@@ -85,7 +87,8 @@ def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups", usern
         "STX07": "192.168.3.211",
         "STX08": "192.168.3.212",
         "STX12": "192.168.3.206",
-        "STX13": "192.168.3.207"
+        "STX13": "192.168.3.207",
+        "STX14": "179.254.0.1",
     }
 
     filename_pattern = re.compile(r'STX\d{2}(-ASA|)backup')
@@ -93,12 +96,18 @@ def generate_dropdowns(source_folder="C:/Users/JSantana2/Desktop/Backups", usern
     backup_files = [file for file in os.listdir(source_folder) if re.fullmatch(filename_pattern, file)!=None]
     stratix_names = [name[:5] for name in backup_files]
 
-    if username==None and password==None:
-        switch_username = os.environ['STX_USER']
-        switch_password = os.environ['STX_PWD']
-    else:
-        switch_username = username
-        switch_password = password
+    try: 
+        if username==None and password==None:
+            switch_username = os.environ['STX_USER']
+            switch_password = os.environ['STX_PWD']
+        else:
+            switch_username = username
+            switch_password = password
+            
+    except KeyError:
+            switch_username = 'username'
+            switch_password = 'password'
+
 
     netmiko_structures = [{'device_type': 'cisco_ios',
                            'host': ip_mapper[name],

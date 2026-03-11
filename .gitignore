@@ -4,3 +4,6 @@ _pycache__/
 *.pyo
 .vscode/
 Backups/
+build/
+dist/
+*.spec

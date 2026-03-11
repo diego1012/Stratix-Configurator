@@ -1,4 +1,7 @@
-from panel import Panel
+from gui.panel import Panel
 
 if __name__ == "__main__":
-    Panel().root.mainloop()
+    try:
+        Panel().root.mainloop()
+    except Exception as e:
+        print(e)

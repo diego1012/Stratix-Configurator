@@ -1,4 +1,4 @@
-from functions import check_difference_config_backup, generate_dropdowns, load_configuration
+from functions.functions import check_difference_config_backup, generate_dropdowns, load_configuration
 import tkinter as tk
 from tkinter import ttk
 import threading
@@ -8,7 +8,10 @@ class Panel:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Configuration Backup Checker")
-        self.root.iconbitmap('Images/RA.ico')
+        try:
+            self.root.iconbitmap('Images/RA.ico')
+        except:
+            pass
 
         self.textStatus = tk.StringVar(value="Waiting for user action...")
 
@@ -43,7 +46,7 @@ class Panel:
 
 
     def get_options(self) -> list:
-        return generate_dropdowns("Backups")    
+        return generate_dropdowns()    
 
     def update_options(self)-> None:
         self.stratixInformation = self.get_options()
@@ -63,7 +66,7 @@ class Panel:
         self.label_message.config(bg="yellow")
         self.textStatus.set(f"Checking file and configuration {self.combo.get()} ...")
         position = self.stratixInformation[0].index(self.combo.get())
-        device = "Backups/" + self.stratixInformation[0][position] + "backup"
+        device = "C:/Users/Test/Desktop/Backups/" + self.stratixInformation[0][position] + "backup"
 
         # Start a new thread to check differences
         threading.Thread(target=self.check_differences_thread, args=(device, self.stratixInformation[1][position])).start()
@@ -102,7 +105,7 @@ class Panel:
 
     def loading_configuration_thread(self):
         position = self.stratixInformation[0].index(self.combo.get())
-        device = "Backups/" + self.stratixInformation[0][position] + "backup"
+        device = "C:/Users/Test/Desktop/Backups/" + self.stratixInformation[0][position] + "backup"
         network_device = self.stratixInformation[1][position]
         result = load_configuration(device, network_device)
 
