@@ -7,3 +7,5 @@ Backups/
 build/
 dist/
 *.spec
+test.py
+master_log.txt
