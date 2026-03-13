@@ -3,6 +3,7 @@ import re
 
 from os import path
 from netmiko import ConnectHandler
+from functions.log import log_message
 
 def check_difference_config_backup(stratix_backup: str, network_device:dict) -> tuple:
     
@@ -60,7 +61,6 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
             code_error = 1
 
     return (response_config==backup_file, code_error)
-
 
 def generate_dropdowns(source_folder=r"C:\Users\Test\Desktop\Backups", username=None, password=None) -> tuple:
 
@@ -128,4 +128,5 @@ def load_configuration(stratix_file: str, network_device: dict) -> bool:
         return True
     
     except Exception as e:
+        log_message(f"An error occurred while loading the configuration: {e}")
         return False
