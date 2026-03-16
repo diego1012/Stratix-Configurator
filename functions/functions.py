@@ -124,7 +124,7 @@ def generate_dropdowns(source_folder=r"C:\Users\Test\Desktop\Backups", username=
     
     return stratix_names, netmiko_structures
 
-def create_logger(filepath="C:/Users/JSantana2/Desktop/Backups/Logs/logs.txt") -> Logger:
+def create_logger(filepath="C:/Users/Test/Desktop/Backups/Logs/logs.txt") -> Logger:
     """
     Generate logger for app monitoring
 
