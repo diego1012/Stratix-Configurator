@@ -113,7 +113,7 @@ def generate_dropdowns(source_folder=r"C:\Users\Test\Desktop\Backups", username=
         if name in ip_mapper.keys():
             switch_structure = {
                                 'device_type': 'cisco_ios',
-                                'host': name,
+                                'host': ip_mapper[name],
                                 'username': credentials[0],
                                 'password': credentials[1]
                                }
