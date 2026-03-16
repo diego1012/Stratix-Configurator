@@ -86,17 +86,17 @@ class Panel:
                     self.yesBtn.config(state="normal")
                     self.noBtn.config(state="normal")
                 case 1:
-                    self.textStatus.set(f"Connection error with Stratix! {self.combo.get()}, please check the connection with {network_device['host']} or ssh configuration")
+                    self.textStatus.set(f"Connection error with Stratix {self.combo.get()}! Please check the connection with {network_device['host']} or ssh configuration")
                     self.label_message.config(bg="#F53527")
                     self.combo.config(state="readonly")
                     self.updateOptionBtn.config(state="active")
                 case 2:
-                    self.textStatus.set(f"Empty file! {self.combo.get()}, please check the backup file.")
+                    self.textStatus.set(f"Empty backup file for {self.combo.get()}! Please check the backup file.")
                     self.label_message.config(bg="#F53527")
                     self.combo.config(state="readonly")
                     self.updateOptionBtn.config(state="active")
                 case 3:
-                    self.textStatus.set(f"Backup file not exist! {self.combo.get()}, please check the backup file.")
+                    self.textStatus.set(f"Backup file does not exist for {self.combo.get()}! Please check the backup file.")
                     self.label_message.config(bg="#F53527")
                     self.combo.config(state="readonly")
                     self.updateOptionBtn.config(state="active")
