@@ -1,9 +1,11 @@
 from gui.panel import Panel
+import traceback
 from functions import log_message
+
+test = True
 
 if __name__ == "__main__":
     try:
-        Panel().root.mainloop()
+        Panel(test).root.mainloop()
     except Exception as e:
-        log_message(f"An error occurred while running the application: {e}")
-        print(e)
+        log_message(traceback.format_exc())

@@ -5,7 +5,7 @@ import re
 from logging import Logger
 from os import path
 from netmiko import ConnectHandler
-from functions.log import log_message
+from .log import log_message
 
 def check_difference_config_backup(stratix_backup: str, network_device:dict) -> tuple:
     
@@ -31,8 +31,6 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
     backup_file = "+"
     response_config = "-"
     code_error = 0
-
-    print(stratix_backup)
     
     # Read backup file
     try:
@@ -64,7 +62,7 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
 
     return (response_config==backup_file, code_error)
 
-def generate_dropdowns(source_folder=r"C:\Users\Test\Desktop\Backups", username=None, password=None) -> tuple:
+def generate_dropdowns(username=None, password=None, test: bool = False) -> tuple:
 
     """
     Generate the dropdown menus for the Stratix Configurator app
@@ -80,7 +78,15 @@ def generate_dropdowns(source_folder=r"C:\Users\Test\Desktop\Backups", username=
             list(dict): list with the netmiko object structure for each of the Stratix switches
     """
 
-    logger = create_logger()
+    # Test enviorement
+
+    if not test:
+        source_folder = r"C:\Users\Test\Desktop\Backups"
+
+    else:
+        source_folder = os.getcwd() + "/Backups"
+
+    logger = create_logger(test)
 
     ip_mapper = {
         "STX02": "192.168.3.213",
@@ -124,7 +130,8 @@ def generate_dropdowns(source_folder=r"C:\Users\Test\Desktop\Backups", username=
     
     return stratix_names, netmiko_structures
 
-def create_logger(filepath="C:/Users/Test/Desktop/Backups/Logs/logs.txt") -> Logger:
+def create_logger(test: bool = False) -> Logger:
+
     """
     Generate logger for app monitoring
 
@@ -136,6 +143,14 @@ def create_logger(filepath="C:/Users/Test/Desktop/Backups/Logs/logs.txt") -> Log
             logger (Logger): Logger object
     """
 
+    # Test enviorenment 
+
+    if not test:
+        filepath = "C:/Users/Test/Desktop/Backups/Logs/logs.txt"
+    
+    else:
+        filepath = os.getcwd() + '/logs.txt'
+
     new_logger = logging.getLogger('stratix_app_logger')
 
     try:
@@ -143,6 +158,10 @@ def create_logger(filepath="C:/Users/Test/Desktop/Backups/Logs/logs.txt") -> Log
     except FileNotFoundError:
         os.makedirs(filepath.split("/logs.txt")[0], exist_ok=True)
         with open('logs.txt', 'w') as log_file:
+            pass
+        log_handler = logging.FileHandler(filepath)
+    except Exception as e:
+        with open(os.getcwd() + '/logs.txt', 'w') as log_file:
             pass
         log_handler = logging.FileHandler(filepath)
 
