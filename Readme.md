@@ -16,4 +16,6 @@ We plan to add a functionality for custom credentials in the next release.<br>
 
 If you are contributing to the app, you can use the following command in your workspace to create the .exe file:
 
-<code>pyinstaller --onefile --noconsole --icon=Images/RA.ico  main.py</code>
+```
+pyinstaller --onefile --noconsole --icon=Images/RA.ico  main.py
+```
