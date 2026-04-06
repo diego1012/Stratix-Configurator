@@ -4,6 +4,10 @@ from tkinter import ttk
 import threading
 import traceback
 from functions import log_message
+from gui.config_frame import ConfigFrame
+from gui.method_frame import MethodFrame
+from gui.serial_frame import SerialFrame
+from gui.load_config_frame import LoadConfigFrame
 
 class Panel:
     def __init__(self, test: bool):
@@ -18,66 +22,71 @@ class Panel:
         # Varible for test
         self.test = test
 
-        self.textStatus = tk.StringVar(value="Waiting for user action...")
 
-        tk.Label(self.root, text="Configuration Path:").grid(row=0, column=0, padx=10, pady=10)
+        self.pixel_art = tk.PhotoImage(file="Images/update.png")
         self.stratixInformation = self.get_options()
-        self.combo = ttk.Combobox(self.root, values=self.stratixInformation[0], state="readonly", justify="center", width=30)
-        self.combo.grid(row=0, column=1, padx=10, pady=10)
-        try:
-            self.combo.current(0)
-        except tk.TclError:
-            log_message(traceback.format_exc())
 
-        self.combo.option_add('*TCombobox*Listbox.Justify', 'center') 
+        # Frame for configuration path
 
-        # Button for updating options
-        self.updateOptionBtn = tk.Button(self.root, text="Update Options", command=self.update_options)
-        self.updateOptionBtn.grid(row=0, column=2, padx=10, pady=10)
+        containerPath = tk.LabelFrame(self.root, text="Configuration Path", padx=20, pady=5)
+        containerPath.pack(padx=20, pady=5, fill="x")
+        
+        self.framePath = ConfigFrame(containerPath, self)
 
-        # Button for checking differences
-        self.checkDiffBtn = tk.Button(self.root, text="Load Configuration", command=self.check_differences)
-        self.checkDiffBtn.grid(row=1, column=0, padx=10, pady=10)
+        # Frame for method selection
 
-        # Label for displaying status messages
-        self.label_message = tk.Label(self.root, textvariable=self.textStatus, wraplength=300)
-        self.label_message.grid(row=1, column=1, columnspan=2, padx=10, pady=10)
-        self.label_message.config(relief="sunken", width=40, height=10, font=("Arial", 12), bg="white")
+        self.var1 = tk.IntVar(value=1)
 
-        # Button for loading configuration
-        tk.Label(self.root, text="Are you sure you want to load this configuration?").grid(row=2, columnspan=3, padx=10, pady=10)
+        containerMethod = tk.LabelFrame(self.root, text="Method Selection", padx=20, pady=5)
+        containerMethod.pack(padx=20, pady=5, fill="both")
 
-        self.yesBtn = tk.Button(self.root, text="Yes", state="disabled", height=1, width=10, font=("Arial", 12), command=self.button_yes)
-        self.yesBtn.grid(row=3, column=0, padx=(30,5), pady=(10, 20))
+        self.frameMethod = MethodFrame(containerMethod, self)
 
-        self.noBtn = tk.Button(self.root, text="No", state="disabled", height=1, width=10, font=("Arial", 12), command=self.button_no)
-        self.noBtn.grid(row= 3, column=2, padx=15, pady=(10, 20))
+        # Frame for  serial communication
 
+        containerSerial = tk.LabelFrame(self.root, text="Serial Communication", padx=20, pady=5)
+        containerSerial.pack(padx=20, pady=5, fill="both")
+
+        self.frameSerial = SerialFrame(containerSerial, self)
+
+        # Frame for load configuration
+
+        containerLoadConfig = tk.LabelFrame(self.root, text="Load Configuration", padx=20, pady=5)
+        containerLoadConfig.pack(padx=20, pady=5, fill="both")
+        
+        self.frameLoadConfig = LoadConfigFrame(containerLoadConfig, self)
+
+    def select_method(self):
+        method = self.var1.get()
+        if method == 1:
+            self.frameSerial.combo.config(state="normal")
+        elif method == 2:
+            self.frameSerial.combo.config(state="disabled")
+        elif method == 3:
+            self.frameSerial.combo.config(state="normal")
 
     def get_options(self) -> list:
         return generate_dropdowns(test=self.test)    
 
     def update_options(self)-> None:
         self.stratixInformation = self.get_options()
-        self.combo['values'] = self.stratixInformation[0]
+        self.framePath.combo['values'] = self.stratixInformation[0]
         try:
-            self.combo.current(0)
+            self.framePath.combo.current(0)
         except tk.TclError:
             log_message(traceback.format_exc())
 
     def check_differences(self) -> bool:
 
         # Disable buttons to prevent multiple clicks
-        self.yesBtn.config(state="disabled")
-        self.noBtn.config(state="disabled")
-        self.checkDiffBtn.config(state="disabled")
-        self.combo.config(state="disabled")
-        self.updateOptionBtn.config(state="disabled")
+        self.frameLoadConfig.disable_all()
+        self.framePath.disable_all()
 
         # Change text message
-        self.label_message.config(bg="yellow")
-        self.textStatus.set(f"Checking file and configuration {self.combo.get()} ...")
-        position = self.stratixInformation[0].index(self.combo.get())
+
+        self.frameLoadConfig.label_message.config(bg="yellow")
+        self.frameLoadConfig.textStatus.set(f"Checking file and configuration {self.framePath.combo.get()} ...")
+        position = self.stratixInformation[0].index(self.framePath.combo.get())
         device = "C:/Users/Test/Desktop/Backups/" + self.stratixInformation[0][position] + "backup"
 
         # Start a new thread to check differences
@@ -85,70 +94,15 @@ class Panel:
 
     def check_differences_thread(self, device, network_device):
         result = check_difference_config_backup(device, network_device)
-        if result[0]:
-            self.yesBtn.config(state="normal")
-            self.noBtn.config(state="normal")
-            self.label_message.config(bg="#27F53C")
-            self.textStatus.set(f"File and configuration are the same! -> {self.combo.get()}")
-        else:
-            match result[1]:
-                case 0:
-                    self.textStatus.set(f"Backup file and configuration are different! {self.combo.get()}, if you are sure that you want to load the configuration, please click the Load Configuration button.")
-                    self.label_message.config(bg="#F5C227")
-                    self.yesBtn.config(state="normal")
-                    self.noBtn.config(state="normal")
-                case 1:
-                    self.textStatus.set(f"Connection error with Stratix {self.combo.get()}! Please check the connection with {network_device['host']} or ssh configuration")
-                    self.label_message.config(bg="#F53527")
-                    self.combo.config(state="readonly")
-                    self.updateOptionBtn.config(state="active")
-                case 2:
-                    self.textStatus.set(f"Empty backup file for {self.combo.get()}! Please check the backup file.")
-                    self.label_message.config(bg="#F53527")
-                    self.combo.config(state="readonly")
-                    self.updateOptionBtn.config(state="active")
-                case 3:
-                    self.textStatus.set(f"Backup file does not exist for {self.combo.get()}! Please check the backup file.")
-                    self.label_message.config(bg="#F53527")
-                    self.combo.config(state="readonly")
-                    self.updateOptionBtn.config(state="active")
-
-        self.checkDiffBtn.config(state="normal")
+        self.frameLoadConfig.status_message(result, self.framePath.combo.get(), network_device)
 
     def loading_configuration_thread(self):
         position = self.stratixInformation[0].index(self.combo.get())
         device = "C:/Users/Test/Desktop/Backups/" + self.stratixInformation[0][position] + "backup"
         network_device = self.stratixInformation[1][position]
         result = load_configuration(device, network_device)
+        self.frameLoadConfig.status_load(result, self.framePath.combo.get(), network_device)
 
-        if result:
-            self.textStatus.set(f"Configuration loaded successfully! {self.combo.get()}")
-            self.label_message.config(bg="#27F53C")
-            self.checkDiffBtn.config(state="active")
-            self.combo.config(state="readonly")
-            self.updateOptionBtn.config(state="active")
-        else:
-            self.textStatus.set(f"Error loading configuration! {self.combo.get()}, please check the connection with {network_device['host']} or ssh configuration")
-            self.label_message.config(bg="#F53527")
-            self.checkDiffBtn.config(state="active")
-            self.combo.config(state="readonly")
-            self.updateOptionBtn.config(state="active")
 
-    def button_no(self):
-        self.yesBtn.config(state="disabled")
-        self.noBtn.config(state="disabled")
-        self.checkDiffBtn.config(state="active")
-        self.combo.config(state="readonly")
-        self.updateOptionBtn.config(state="active")
-        self.textStatus.set("Waiting for user action...")
-        self.label_message.config(bg='white')
 
-    def button_yes(self):
-        self.textStatus.set(f"Loading configuration {self.combo.get()} ...")
-        self.label_message.config(bg="#27D3F5")
-        self.yesBtn.config(state="disabled")
-        self.noBtn.config(state="disabled")
-        self.checkDiffBtn.config(state="disabled")
-        self.combo.config(state="disabled")
-        self.updateOptionBtn.config(state="disabled")
-        threading.Thread(target=self.loading_configuration_thread).start()
+
