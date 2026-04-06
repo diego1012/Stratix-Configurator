@@ -23,7 +23,7 @@ class Panel:
         self.test = test
 
 
-        self.pixel_art = tk.PhotoImage(file="Images/update.png")
+        self.pixel_art = tk.PhotoImage(file="Images/actualizar.png")
         self.stratixInformation = self.get_options()
 
         # Frame for configuration path
