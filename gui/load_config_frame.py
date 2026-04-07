@@ -9,14 +9,20 @@ class LoadConfigFrame(tk.LabelFrame):
 
         self.controller = controller
 
+        self.listBacukp = []
+        self.listConfig = []
+
         self.textStatus = tk.StringVar(value="Waiting for user action...")
 
         self.checkDiffBtn = tk.Button(parent, text="Load Configuration", command=controller.check_differences)
-        self.checkDiffBtn.grid(row=1, column=0, padx=10, pady=10)
+        self.checkDiffBtn.grid(row=0, column=0, padx=10, pady=10)
+
+        self.newWindow = tk.Button(parent, text="Check Differences", command=lambda: self.open_comparation_window(parent))
+        self.newWindow.grid(row=1, column=0, padx=10, pady=10)
 
         # Label for displaying status messages
         self.label_message = tk.Label(parent, textvariable=self.textStatus, wraplength=300)
-        self.label_message.grid(row=1, column=1, columnspan=2, padx=10, pady=10)
+        self.label_message.grid(row=0, column=1, columnspan=2, rowspan=2, padx=10, pady=10)
         self.label_message.config(relief="sunken", width=40, height=10, font=("Arial", 12), bg="white")
 
         # Button for loading configuration
@@ -33,13 +39,16 @@ class LoadConfigFrame(tk.LabelFrame):
         self.yesBtn.config(state="disabled")
         self.noBtn.config(state="disabled")
 
-    def status_message(self, result: int, stratix: str, network_device: dict)-> None:
+    def status_message(self, result: tuple, stratix: str, network_device: dict)-> None:
+
+        self.listBacukp = result[2]
+        self.listConfig = result[3]
 
         if result[0]:
             self.yesBtn.config(state="normal")
             self.noBtn.config(state="normal")
             self.label_message.config(bg="#27F53C")
-            self.textStatus.set(f"File and configuration are the same! -> {self.combo.get()}")
+            self.textStatus.set(f"File and configuration are the same! -> {self.controller.framePath.combo.get()}")
         else:
             match result[1]:
                 case 0:
@@ -97,3 +106,51 @@ class LoadConfigFrame(tk.LabelFrame):
             self.checkDiffBtn.config(state="active")
             self.controller.framePath.combo.config(state="readonly")
             self.controller.framePath.updateOptionBtn.config(state="active")
+
+    def open_comparation_window(self, root):
+        comparation = tk.Toplevel(root)
+        comparation.title("Comparation Window")
+        #new_window.geometry("300x200")
+        comparation.grab_set()  # Make the new window modal (optional)
+        
+        comparation.columnconfigure(1, weight=1)
+        comparation.rowconfigure(1, weight=1)
+
+        #Add widgets directly to the new window
+
+        self.textBackup = tk.Text(comparation)
+        self.textBackup.grid( row=0, column=1)
+
+        scrollBackup = tk.Scrollbar(comparation)
+        scrollBackup.grid(row=0, column=0, sticky='ns')
+        scrollBackup.config(command=self.sync_scroll)
+
+        self.textConfig = tk.Text(comparation)
+        self.textConfig.grid( row=0, column=2)
+
+        # Define styles
+        self.textBackup.tag_configure(True, background="#ff5959")
+        self.textBackup.tag_configure(False, background="#ffffff")
+        self.textConfig.tag_configure(True, background="#ff5959")
+        self.textConfig.tag_configure(False, background="#ffffff")
+
+        # Insert lines with alternating colors
+        for i in range(self.listBacukp.__len__()):
+            if i <= 9:
+                space = " " * 4
+            elif 10 <= i <= 99:
+                space = " " * 3
+            else:
+                space = " " * 2
+
+            tag = True if self.listBacukp[i] != self.listConfig[i] else False
+            self.textBackup.insert("end", str(i) + space + self.listBacukp[i] + "\n", tag)
+            self.textConfig.insert("end", str(i) + space + self.listConfig[i] + "\n", tag)
+
+        self.textBackup.config(state="disabled")
+        self.textConfig.config(state="disabled")
+
+    def sync_scroll(self, *args):
+    # Move both text widgets when the scrollbar is dragged
+        self.textBackup.yview(*args)
+        self.textConfig.yview(*args)
