@@ -31,7 +31,7 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
     backup_file = "+"
     response_config = "-"
     code_error = 0
-    
+
     # Read backup file
     try:
         with open(stratix_backup, 'r', encoding='utf-8') as f:
@@ -39,7 +39,8 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
             if backup_file == '':
                 code_error = 2
             else:
-                backup_file = "".join(backup_file[4:])
+                backup_file = [s.replace("\n", "") for s in backup_file[4:]]
+
     except FileNotFoundError:
         code_error = 3
 
@@ -54,13 +55,13 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
             # Read current config stratix
             message = 'show run'    
             response_config = connect.send_command(message).split("\n")
-            response_config = "\n".join(response_config[6:])
+            response_config = response_config[6:-1]
             connect.disconnect()
 
         except Exception as e:
             code_error = 1
 
-    return (response_config==backup_file, code_error)
+    return (response_config==backup_file, code_error, backup_file, response_config)
 
 def generate_dropdowns(username=None, password=None, test: bool = False) -> tuple:
 
