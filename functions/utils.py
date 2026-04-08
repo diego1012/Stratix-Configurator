@@ -55,16 +55,11 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
             # Read current config stratix
             message = 'show run'    
             response_config = connect.send_command(message).split("\n")
-            #print(response_config[6:-1])
             response_config = response_config[6:-1]
             connect.disconnect()
 
         except Exception as e:
             code_error = 1
-
-        for i in range(min(len(response_config), len(backup_file))):
-            if response_config[i] != backup_file[i]:
-                print(response_config[i],' ------- ' ,backup_file[i])
 
     return (response_config==backup_file, code_error, backup_file, response_config)
 

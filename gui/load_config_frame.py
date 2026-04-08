@@ -19,6 +19,7 @@ class LoadConfigFrame(tk.LabelFrame):
 
         self.newWindow = tk.Button(parent, text="Check Differences", command=lambda: self.open_comparation_window(parent))
         self.newWindow.grid(row=1, column=0, padx=10, pady=10)
+        self.newWindow.config(state = "disabled")
 
         # Label for displaying status messages
         self.label_message = tk.Label(parent, textvariable=self.textStatus, wraplength=300)
@@ -38,6 +39,7 @@ class LoadConfigFrame(tk.LabelFrame):
         self.checkDiffBtn.config(state="disabled")
         self.yesBtn.config(state="disabled")
         self.noBtn.config(state="disabled")
+        self.newWindow.config(state = "disabled")
 
     def status_message(self, result: tuple, stratix: str, network_device: dict)-> None:
 
@@ -49,6 +51,7 @@ class LoadConfigFrame(tk.LabelFrame):
             self.noBtn.config(state="normal")
             self.label_message.config(bg="#27F53C")
             self.textStatus.set(f"File and configuration are the same! -> {self.controller.framePath.combo.get()}")
+            self.newWindow.config(state = "normal")
         else:
             match result[1]:
                 case 0:
@@ -56,6 +59,7 @@ class LoadConfigFrame(tk.LabelFrame):
                     self.label_message.config(bg="#F5C227")
                     self.yesBtn.config(state="normal")
                     self.noBtn.config(state="normal")
+                    self.newWindow.config(state = "normal")
                 case 1:
                     self.textStatus.set(f"Connection error with Stratix {stratix}! Please check the connection with {network_device['host']} or ssh configuration")
                     self.label_message.config(bg="#F53527")
@@ -77,6 +81,7 @@ class LoadConfigFrame(tk.LabelFrame):
     def button_no(self):
         self.yesBtn.config(state="disabled")
         self.noBtn.config(state="disabled")
+        self.newWindow.config(state = "disabled")
         self.checkDiffBtn.config(state="active")
         self.controller.framePath.combo.config(state="readonly")
         self.controller.framePath.updateOptionBtn.config(state="active")
@@ -89,6 +94,7 @@ class LoadConfigFrame(tk.LabelFrame):
         self.yesBtn.config(state="disabled")
         self.noBtn.config(state="disabled")
         self.checkDiffBtn.config(state="disabled")
+        self.newWindow.config(state = "disabled")
         self.controller.framePath.combo.config(state="disabled")
         self.controller.framePath.updateOptionBtn.config(state="disabled")
         Thread(target=self.controller.loading_configuration_thread).start()
@@ -110,23 +116,34 @@ class LoadConfigFrame(tk.LabelFrame):
     def open_comparation_window(self, root):
         comparation = tk.Toplevel(root)
         comparation.title("Comparation Window")
-        #new_window.geometry("300x200")
-        comparation.grab_set()  # Make the new window modal (optional)
+        comparation.state('zoomed')
+        comparation.grab_set()
         
+        try:
+            comparation.iconbitmap('Images/RA.ico')
+        except:
+            pass
+
+        comparation.columnconfigure(0, weight=0)
         comparation.columnconfigure(1, weight=1)
-        comparation.rowconfigure(1, weight=1)
+        comparation.columnconfigure(2, weight=1)
+        comparation.rowconfigure(0, weight=1)
 
         #Add widgets directly to the new window
 
-        self.textBackup = tk.Text(comparation)
-        self.textBackup.grid( row=0, column=1)
+        scrollBackup = tk.Scrollbar(comparation, width=30)
+        scrollBackup.grid(row=0, column=0, sticky='nsew')
 
-        scrollBackup = tk.Scrollbar(comparation)
-        scrollBackup.grid(row=0, column=0, sticky='ns')
+        self.textBackup = tk.Text(comparation)
+        self.textBackup.grid(row=0, column=1, sticky="nsew")
+
         scrollBackup.config(command=self.sync_scroll)
+        #scrollBackup.config(command=self.textBackup.yview)
+
+        self.textBackup.config(yscrollcommand=scrollBackup.set)
 
         self.textConfig = tk.Text(comparation)
-        self.textConfig.grid( row=0, column=2)
+        self.textConfig.grid(row=0, column=2, sticky="nsew")
 
         # Define styles
         self.textBackup.tag_configure(True, background="#ff5959")
