@@ -1,10 +1,13 @@
 import logging
 import os
 import re
+import serial
+import time
 
 from logging import Logger
 from os import path
 from netmiko import ConnectHandler
+from serial.tools.list_ports_windows import comports
 from .log import log_message
 
 def check_difference_config_backup(stratix_backup: str, network_device:dict) -> tuple:
@@ -32,6 +35,7 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
     response_config = "-"
     code_error = 0
 
+    
     # Read backup file
     try:
         with open(stratix_backup, 'r', encoding='utf-8') as f:
@@ -63,7 +67,7 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
 
     return (response_config==backup_file, code_error, backup_file, response_config)
 
-def generate_dropdowns(username=None, password=None, test: bool = False) -> tuple:
+def generate_dropdowns(credentials=[None]*2, serial=False, test: bool = False) -> tuple:
 
     """
     Generate the dropdown menus for the Stratix Configurator app
@@ -72,12 +76,16 @@ def generate_dropdowns(username=None, password=None, test: bool = False) -> tupl
         source folder (str): The absolute path to the folder where backup config files are located
         username (str): Switch login username
         password (str): Switch login password
+        serial (bool): Flag to indicate if customer is using serial or EtherNet/IP communication
 
     Returns:
         A tuple containing:
             list(str): list with the names of all the Stratix devices with a backup in this folder
             list(dict): list with the netmiko object structure for each of the Stratix switches
     """
+    
+    if not test:
+        source_folder = r"C:\Users\Test\Desktop\Backups"
 
     # Test enviorement
 
@@ -88,6 +96,12 @@ def generate_dropdowns(username=None, password=None, test: bool = False) -> tupl
         source_folder = os.getcwd() + "/Backups"
 
     logger = create_logger(test)
+
+    stratix_names, netmiko_structures = get_structures(logger, source_folder, credentials)
+    
+    return stratix_names, netmiko_structures
+
+def get_structures(logger:Logger, backups_folder, credentials, serial):
 
     ip_mapper = {
         "STX02": "192.168.3.213",
@@ -104,37 +118,95 @@ def generate_dropdowns(username=None, password=None, test: bool = False) -> tupl
     filename_pattern = re.compile(r'STX\d{2}(-ASA|)backup')
 
     try:
-        logger.info(f"Looking for backup files in {source_folder}...")
-        backup_files = [file for file in os.listdir(source_folder) if re.fullmatch(filename_pattern, file)!=None]
+        logger.info(f"Looking for backup files in {backups_folder}...")
+        backup_files = [file for file in os.listdir(backups_folder) if re.fullmatch(filename_pattern, file)!=None]
         logger.info(f"Found {len(backup_files)} valid files")
-        stratix_names = [name[:5] for name in backup_files]
+        switch_names = [name[:5] for name in backup_files]
     
     except FileNotFoundError:
-         logger.error(f"Folder {source_folder} does not exist")
+        logger.error(f"Folder {backups_folder} does not exist")
 
-    credentials = set_credentials(logger, username, password)
+    credentials_to_use = set_credentials(logger, credentials)
 
     netmiko_structures = []
 
-    for name in stratix_names:
-        if name in ip_mapper.keys():
-            switch_structure = {
-                                'device_type': 'cisco_ios',
-                                'host': ip_mapper[name],
-                                'username': credentials[0],
-                                'password': credentials[1]
-                               }
-            netmiko_structures.append(switch_structure)
-        else:
-            logger.error(f"The Stratix switch associated to file {name}backup is not accessible or does not exist")
-            stratix_names.remove(name)
-    
-    return stratix_names, netmiko_structures
+    if serial == 0:
+        # Build netmiko structures for SSH comms
+        for name in switch_names:
+            if name in ip_mapper.keys():
+                switch_structure = {
+                                    'device_type': 'cisco_ios',
+                                    'host': ip_mapper[name],
+                                    'username': credentials_to_use[0],
+                                    'password': credentials_to_use[1]
+                                }
+                netmiko_structures.append(switch_structure)
+            else:
+                logger.error(f"The Stratix switch associated to file {name}backup is not accessible or does not exist")
+                switch_names.remove(name)
+    else:
+        # Reset list of switch names, so we can store the serial ports names in it
+        switch_names = []
+
+        # Build netmiko structures for serial comms
+        serial_ports = comports()
+        for port in serial_ports:
+            logger.info(f"Checking {port.device} - {port.description}")
+            try:
+                # Configure serial connection (standard Cisco settings)
+                ser = serial.Serial(
+                    port=port.device,
+                    baudrate=9600,
+                    parity='N',
+                    stopbits=1,
+                    bytesize=8,
+                    timeout=2 # Short timeout
+                )
+                
+                # Send a few enters to trigger a response
+                ser.write(b'\r')
+                time.sleep(1)
+                
+                # Read response
+                response = ser.read(ser.in_waiting).decode('utf-8', errors='ignore')
+                
+                # Check if it looks like a Cisco prompt
+                if '>' in response or '#' in response or 'User Access' in response:
+                    logger.info(f"Cisco device found on {port.device}")
+                    ser.close()
+
+                    #Create netmiko structure
+                    cisco_serial = {
+                        "device_type": "cisco_ios_serial",
+                        "username": credentials[0],
+                        "password": credentials[1],
+                        "fast_cli": False,
+                        "serial_settings": {
+                            "port": port.device,
+                            "baudrate": 9600,
+                            "bytesize": serial.EIGHTBITS,
+                            "parity": serial.PARITY_NONE,
+                            "stopbits": serial.STOPBITS_ONE,
+                        },
+                    }
+
+                    netmiko_structures.append(cisco_serial)
+                    switch_names.append(port.device)
+
+                else:
+                    logger.info("No Cisco switch detected.")
+                ser.close()
+                
+            except Exception as e:
+                # Port might be in use or unauthorized
+                logger.error(e)
+                continue            
+
+    return switch_names, netmiko_structures
 
 def create_logger(test: bool = False) -> Logger:
-
     """
-    Generate logger for app monitoring
+    Generate user-readable logger for app monitoring
 
     Args:
         filepath (str): Path of logs file 
@@ -143,6 +215,11 @@ def create_logger(test: bool = False) -> Logger:
         A tuple containing:
             logger (Logger): Logger object
     """
+    if not test:
+        filepath = "C:/Users/Test/Desktop/Backups/Logs/logs.txt"
+    
+    else:
+        filepath = os.getcwd() + '/logs.txt'
 
     # Test enviorenment 
 
@@ -174,14 +251,13 @@ def create_logger(test: bool = False) -> Logger:
 
     return new_logger
 
-def set_credentials(logger: Logger, username=None, password=None) -> tuple:
+def set_credentials(logger: Logger, credentials) -> tuple:
     """
     Sets credentials to be used for switch log in
 
     Args:
         logger (Logger): logs events inside this function
-        username (str)
-        password (str)
+        credentials [str,str]: list of 2 string containing username and password
 
     Returns:
         A tuple containing:
@@ -190,13 +266,13 @@ def set_credentials(logger: Logger, username=None, password=None) -> tuple:
     """
 
     try: 
-        if username==None and password==None:
+        if len(credentials)==2 and credentials == [None]*2:
             switch_username = os.environ['STX_USER']
             switch_password = os.environ['STX_PWD']
         else:
             logger.info("Custom credentials provided by user")
-            switch_username = username
-            switch_password = password
+            switch_username = credentials[0]
+            switch_password = credentials[1]
             
     except KeyError:
         logger.warning(f"Local environment variables STX_USER and STX_PWD for Rockwell credentials missing! Generating generic credentials...")
