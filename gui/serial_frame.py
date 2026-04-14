@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from functions import log_message
+from functions import log_message, generate_dropdowns
 import traceback
 
 class SerialFrame(tk.LabelFrame):
@@ -9,7 +9,9 @@ class SerialFrame(tk.LabelFrame):
 
         tk.Label(parent, relief= 'flat', text="Serial Port:").grid(row=0, column=0, padx=20, pady=10)
 
-        self.combo = ttk.Combobox(parent, values=['COM1', 'COM2', 'COM3'], state="readonly", justify="center", width=15)
+        serial_ports, _ = generate_dropdowns(serial=True)
+
+        self.combo = ttk.Combobox(parent, values=serial_ports, state="readonly", justify="center", width=15)
         self.combo.grid(row=0, column=1, padx=20, pady=10)
         self.combo.option_add('*TCombobox*Listbox.Justify', 'center') 
 
@@ -17,4 +19,5 @@ class SerialFrame(tk.LabelFrame):
         self.updateOptionBtn.grid(row=0, column=2, padx=20, pady=10, ipadx=10)
 
     def update_ports(self):
-        pass
+        serial_ports, _ = generate_dropdowns(serial=True)
+        self.combo['values'] = serial_ports

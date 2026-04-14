@@ -10,6 +10,8 @@ from netmiko import ConnectHandler
 from serial.tools.list_ports_windows import comports
 from .log import log_message
 
+BACKUPS_FILEPATH = "C:/Users/Test/Desktop/Backups"
+
 def check_difference_config_backup(stratix_backup: str, network_device:dict) -> tuple:
     
     """
@@ -287,6 +289,11 @@ def load_configuration(stratix_file: str, network_device: dict) -> bool:
     try:
         connect = ConnectHandler(**network_device)
         connect.enable()
+
+        if network_device["device_type"] == "cisco_ios_serial":
+            switch_hostname = connect.send_command("show running-config | include hostname")
+            switch_name = switch_hostname.split(" ")[1]
+            stratix_file = path.join(BACKUPS_FILEPATH, f"{switch_name}backup")
 
         command = connect.send_config_from_file(config_file=stratix_file)
         
