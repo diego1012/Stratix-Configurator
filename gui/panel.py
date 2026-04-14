@@ -1,17 +1,23 @@
-from functions.functions import check_difference_config_backup, generate_dropdowns, load_configuration
+from functions.utils import check_difference_config_backup, generate_dropdowns, load_configuration
 import tkinter as tk
 from tkinter import ttk
 import threading
+import traceback
+from functions import log_message
 
 
 class Panel:
-    def __init__(self):
+    def __init__(self, test: bool):
         self.root = tk.Tk()
         self.root.title("Configuration Backup Checker")
+
         try:
             self.root.iconbitmap('Images/RA.ico')
         except:
             pass
+
+        # Variable for test
+        self.test = test
 
         self.textStatus = tk.StringVar(value="Waiting for user action...")
 
@@ -19,7 +25,11 @@ class Panel:
         self.stratixInformation = self.get_options()
         self.combo = ttk.Combobox(self.root, values=self.stratixInformation[0], state="readonly", justify="center", width=30)
         self.combo.grid(row=0, column=1, padx=10, pady=10)
-        self.combo.current(0)
+        try:
+            self.combo.current(0)
+        except tk.TclError:
+            log_message(traceback.format_exc())
+
         self.combo.option_add('*TCombobox*Listbox.Justify', 'center') 
 
         # Button for updating options
@@ -46,12 +56,15 @@ class Panel:
 
 
     def get_options(self) -> list:
-        return generate_dropdowns()    
+        return generate_dropdowns(test=self.test)    
 
     def update_options(self)-> None:
         self.stratixInformation = self.get_options()
         self.combo['values'] = self.stratixInformation[0]
-        self.combo.current(0)
+        try:
+            self.combo.current(0)
+        except tk.TclError:
+            log_message(traceback.format_exc())
 
     def check_differences(self) -> bool:
 
