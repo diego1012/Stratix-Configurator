@@ -16,7 +16,7 @@ class ConfigFrame(tk.LabelFrame):
         except tk.TclError:
             log_message(traceback.format_exc())
 
-        self.combo.option_add('*TCombobox*Listbox.Justify', 'center') 
+        self.combo.option_add('*TCombobox*Listbox.Justify', 'center')
 
         # Button for updating options
         self.updateOptionBtn = tk.Button(parent, image=controller.pixel_art, command=controller.update_options)
