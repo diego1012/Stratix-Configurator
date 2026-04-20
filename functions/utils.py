@@ -36,10 +36,6 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
     backup_file = "+"
     response_config = "-"
     code_error = 0
-
-    # print(stratix_backup) # delete after troubleshooting
-    print(network_device) # delete after troubleshooting
-
     
     # Read backup file
     try:
@@ -68,7 +64,6 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
             connect.disconnect()
 
         except Exception as e:
-            print(e)  # delete this after troubleshooting
             code_error = 1
 
     return (response_config==backup_file, code_error, backup_file, response_config)
@@ -146,11 +141,9 @@ def get_structures(logger:Logger, backups_folder, credentials, serial_comms):
                                 }
                 
                 netmiko_structures.append(switch_structure)
-                print(switch_structure) # delete after troubleshooting
             else:
                 logger.error(f"The Stratix switch associated to file {name}backup is not accessible or does not exist")
                 switch_names.remove(name)
-        print(switch_names) # delete after troubleshooting
     else:
         switch_names = []
 
