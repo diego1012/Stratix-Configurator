@@ -107,7 +107,7 @@ def generate_dropdowns(credentials=[None]*2, serial=False, test: bool = False) -
 def get_structures(logger:Logger, backups_folder, credentials, serial_comms):
 
     ip_mapper = {
-        "STX02": "192.168.3.213",
+        "STX01": "192.168.3.213",
         "STX04": "192.168.3.215",
         "STX05": "192.168.3.209",
         "STX06": "192.168.3.210",
@@ -136,6 +136,7 @@ def get_structures(logger:Logger, backups_folder, credentials, serial_comms):
             logger.error(f"Folder {backups_folder} does not exist")
 
         for name in switch_names:
+            print(name)
             if name in ip_mapper.keys():
                 switch_structure = {
                                     'device_type': 'cisco_ios',
@@ -143,11 +144,13 @@ def get_structures(logger:Logger, backups_folder, credentials, serial_comms):
                                     'username': credentials_to_use[0],
                                     'password': credentials_to_use[1]
                                 }
+                
                 netmiko_structures.append(switch_structure)
+                print(switch_structure) # delete after troubleshooting
             else:
                 logger.error(f"The Stratix switch associated to file {name}backup is not accessible or does not exist")
                 switch_names.remove(name)
-                print(switch_names) # delete after troubleshooting
+        print(switch_names) # delete after troubleshooting
     else:
         switch_names = []
 
@@ -251,6 +254,7 @@ def create_logger(test: bool = False) -> Logger:
     log_handler.setFormatter(formatter)
     new_logger.addHandler(log_handler)
     new_logger.setLevel(logging.DEBUG)
+    new_logger.propagate = False
 
     return new_logger
 
