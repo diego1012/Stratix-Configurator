@@ -57,14 +57,26 @@ class Panel:
         
         self.frameLoadConfig = LoadConfigFrame(containerLoadConfig, self)
 
+        # set initial conditions for update buttons and dropdowns
+        self.frameSerial.combo.config(state="normal")
+        self.frameSerial.updateOptionBtn.config(state="normal")
+        self.framePath.combo.config(state="disabled")
+        self.framePath.updateOptionBtn.config(state="disabled")
+
     def select_method(self):
         method = self.var1.get()
         if method == 1:
             self.frameSerial.combo.config(state="normal")
+            self.frameSerial.updateOptionBtn.config(state="normal")
             self.framePath.combo.config(state="disabled")
+            self.framePath.updateOptionBtn.config(state="disabled")
+            self.update_options(serial_comms=True)
         elif method == 2:
             self.frameSerial.combo.config(state="disabled")
+            self.frameSerial.updateOptionBtn.config(state="disabled")
             self.framePath.combo.config(state="normal")
+            self.framePath.updateOptionBtn.config(state="normal")
+            self.update_options(serial_comms=False)
         elif method == 3:
             self.frameSerial.combo.config(state="normal")
 
@@ -81,6 +93,7 @@ class Panel:
                 log_message(traceback.format_exc())
         else:
             self.frameSerial.combo['values'] = self.stratixInformation[0]
+            if len(self.frameSerial.combo['values']) == 0: self.frameSerial.combo.set("")
             try:
                 self.frameSerial.combo.current(0)
             except tk.TclError:
@@ -116,15 +129,25 @@ class Panel:
             device_name = self.framePath.combo.get()
         else:
             device_name = self.frameSerial.combo.get()
-        print(network_device) #delete after troubleshooting
         self.frameLoadConfig.status_message(result, device_name, network_device)
 
     def loading_configuration_thread(self):
-        position = self.stratixInformation[0].index(self.combo.get())
-        device = "C:/Users/Test/Desktop/Backups/" + self.stratixInformation[0][position] + "backup"
+        if self.var1.get() == 1:
+            position = self.stratixInformation[0].index(self.frameSerial.combo.get())
+            switch_name = get_switch_name(self.frameSerial.combo.get())
+            device = "C:/Users/Test/Desktop/Backups/" + switch_name + "backup"
+
+        else:
+            position = self.stratixInformation[0].index(self.framePath.combo.get())
+            device = "C:/Users/Test/Desktop/Backups/" + self.framePath.combo.get() + "backup"
+        
         network_device = self.stratixInformation[1][position]
         result = load_configuration(device, network_device)
-        self.frameLoadConfig.status_load(result, self.framePath.combo.get(), network_device)
+
+        if self.var1.get() == 1:
+            self.frameLoadConfig.status_load(result, self.frameSerial.combo.get(), network_device)
+        else:
+            self.frameLoadConfig.status_load(result, self.framePath.combo.get(), network_device)
 
 
 
