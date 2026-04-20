@@ -50,18 +50,29 @@ class LoadConfigFrame(tk.LabelFrame):
             self.yesBtn.config(state="normal")
             self.noBtn.config(state="normal")
             self.label_message.config(bg="#27F53C")
-            self.textStatus.set(f"File and configuration are the same! -> {self.controller.framePath.combo.get()}")
+            if self.controller.var1.get() == 1:
+                self.textStatus.set(f"File and configuration are the same! -> {self.controller.frameSerial.combo.get()}")
+            else:
+                self.textStatus.set(f"File and configuration are the same! -> {self.controller.framePath.combo.get()}")
             self.newWindow.config(state = "normal")
         else:
+            # Get the name of the device or serial port with which we are communicating
+            if 'host' in network_device.keys():
+                device = network_device['host']
+            else:
+                device = network_device['serial_settings']['port']
+
+            # Handle connection status cases
             match result[1]:
                 case 0:
+                    print(f"aki ta: {stratix}") # delete after troubleshooting
                     self.textStatus.set(f"Backup file and configuration are different! {stratix}, if you are sure that you want to load the configuration, please click the Load Configuration button.")
                     self.label_message.config(bg="#F5C227")
                     self.yesBtn.config(state="normal")
                     self.noBtn.config(state="normal")
                     self.newWindow.config(state = "normal")
                 case 1:
-                    self.textStatus.set(f"Connection error with Stratix {stratix}! Please check the connection with {network_device['host']} or ssh configuration")
+                    self.textStatus.set(f"Connection error with Stratix {stratix}! Please check the connection with {device} or ssh configuration")
                     self.label_message.config(bg="#F53527")
                     self.controller.framePath.combo.config(state="readonly")
                     self.controller.framePath.updateOptionBtn.config(state="active")
@@ -83,13 +94,20 @@ class LoadConfigFrame(tk.LabelFrame):
         self.noBtn.config(state="disabled")
         self.newWindow.config(state = "disabled")
         self.checkDiffBtn.config(state="active")
-        self.controller.framePath.combo.config(state="readonly")
-        self.controller.framePath.updateOptionBtn.config(state="active")
+        if self.controller.var1.get() == 1:
+            self.controller.frameSerial.combo.config(state="readonly")
+            self.controller.frameSerial.updateOptionBtn.config(state="active")
+        else:
+            self.controller.framePath.combo.config(state="readonly")
+            self.controller.framePath.updateOptionBtn.config(state="active")
         self.textStatus.set("Waiting for user action...")
         self.label_message.config(bg='white')
 
     def button_yes(self):
-        self.textStatus.set(f"Loading configuration {self.combo.get()} ...")
+        if self.controller.var1.get() == 1:
+            self.textStatus.set(f"Loading configuration to {self.controller.frameSerial.combo.get()} ...")
+        else:
+            self.textStatus.set(f"Loading configuration to {self.controller.framePath.combo.get()} ...")
         self.label_message.config(bg="#27D3F5")
         self.yesBtn.config(state="disabled")
         self.noBtn.config(state="disabled")
@@ -97,6 +115,8 @@ class LoadConfigFrame(tk.LabelFrame):
         self.newWindow.config(state = "disabled")
         self.controller.framePath.combo.config(state="disabled")
         self.controller.framePath.updateOptionBtn.config(state="disabled")
+        self.controller.frameSerial.combo.config(state="disabled")
+        self.controller.frameSerial.updateOptionBtn.config(state="disabled")
         Thread(target=self.controller.loading_configuration_thread).start()
 
     def status_load(self, result: bool, stratix: str, network_device: dict): 
@@ -104,14 +124,25 @@ class LoadConfigFrame(tk.LabelFrame):
             self.textStatus.set(f"Configuration loaded successfully! {stratix}")
             self.label_message.config(bg="#27F53C")
             self.checkDiffBtn.config(state="active")
-            self.controller.framePath.combo.config(state="readonly")
-            self.updateOptionBtn.config(state="active")
+            if self.controller.var1.get() == 1:
+                self.controller.frameSerial.combo.config(state="readonly")
+                self.controller.frameSerial.updateOptionBtn.config(state="active")
+            else:
+                self.controller.framePath.combo.config(state="readonly")
+                self.controller.framePath.updateOptionBtn.config(state="active")
         else:
-            self.textStatus.set(f"Error loading configuration! {stratix}, please check the connection with {network_device['host']} or ssh configuration")
+            if self.controller.var1.get() == 1:
+                self.textStatus.set(f"Error loading configuration to {stratix}! Please check the serial connection with {stratix}")
+            else:
+                self.textStatus.set(f"Error loading configuration to {stratix}! Please check the connection with {network_device['host']} or ssh configuration")
             self.label_message.config(bg="#F53527")
             self.checkDiffBtn.config(state="active")
-            self.controller.framePath.combo.config(state="readonly")
-            self.controller.framePath.updateOptionBtn.config(state="active")
+            if self.controller.var1.get() == 1:
+                self.controller.frameSerial.combo.config(state="readonly")
+                self.controller.frameSerial.updateOptionBtn.config(state="active")
+            else:
+                self.controller.framePath.combo.config(state="readonly")
+                self.controller.framePath.updateOptionBtn.config(state="active")
 
     def open_comparation_window(self, root):
         comparation = tk.Toplevel(root)

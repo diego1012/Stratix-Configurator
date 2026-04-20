@@ -2,7 +2,7 @@ from gui.panel import Panel
 import traceback
 from functions import log_message
 
-test = True
+test = False
 
 if __name__ == "__main__":
     try:

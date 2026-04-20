@@ -36,7 +36,6 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
     backup_file = "+"
     response_config = "-"
     code_error = 0
-
     
     # Read backup file
     try:
@@ -60,7 +59,7 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
 
             # Read current config stratix
             message = 'show run'    
-            response_config = connect.send_command(message).split("\n")
+            response_config = connect.send_command(message, read_timeout= 20).split("\n")
             response_config = response_config[6:-1]
             connect.disconnect()
 
@@ -85,9 +84,6 @@ def generate_dropdowns(credentials=[None]*2, serial=False, test: bool = False) -
             list(str): list with the names of all the Stratix devices with a backup in this folder
             list(dict): list with the netmiko object structure for each of the Stratix switches
     """
-    
-    if not test:
-        source_folder = r"C:\Users\Test\Desktop\Backups"
 
     # Test enviorement
 
@@ -99,14 +95,14 @@ def generate_dropdowns(credentials=[None]*2, serial=False, test: bool = False) -
 
     logger = create_logger(test)
 
-    stratix_names, netmiko_structures = get_structures(logger, source_folder, credentials)
+    stratix_names, netmiko_structures = get_structures(logger, source_folder, credentials, serial)
     
     return stratix_names, netmiko_structures
 
-def get_structures(logger:Logger, backups_folder, credentials, serial):
+def get_structures(logger:Logger, backups_folder, credentials, serial_comms):
 
     ip_mapper = {
-        "STX02": "192.168.3.213",
+        "STX01": "192.168.3.213",
         "STX04": "192.168.3.215",
         "STX05": "192.168.3.209",
         "STX06": "192.168.3.210",
@@ -119,22 +115,23 @@ def get_structures(logger:Logger, backups_folder, credentials, serial):
 
     filename_pattern = re.compile(r'STX\d{2}(-ASA|)backup')
 
-    try:
-        logger.info(f"Looking for backup files in {backups_folder}...")
-        backup_files = [file for file in os.listdir(backups_folder) if re.fullmatch(filename_pattern, file)!=None]
-        logger.info(f"Found {len(backup_files)} valid files")
-        switch_names = [name[:5] for name in backup_files]
-    
-    except FileNotFoundError:
-        logger.error(f"Folder {backups_folder} does not exist")
-
     credentials_to_use = set_credentials(logger, credentials)
 
     netmiko_structures = []
 
-    if serial == 0:
-        # Build netmiko structures for SSH comms
+    if serial_comms == 0:
+        # Build names and netmiko structures for SSH comms
+        try:
+            logger.info(f"Looking for backup files in {backups_folder}...")
+            backup_files = [file for file in os.listdir(backups_folder) if re.fullmatch(filename_pattern, file)!=None]
+            logger.info(f"Found {len(backup_files)} valid files")
+            switch_names = [name[:5] for name in backup_files]
+    
+        except FileNotFoundError:
+            logger.error(f"Folder {backups_folder} does not exist")
+
         for name in switch_names:
+            print(name)
             if name in ip_mapper.keys():
                 switch_structure = {
                                     'device_type': 'cisco_ios',
@@ -142,21 +139,21 @@ def get_structures(logger:Logger, backups_folder, credentials, serial):
                                     'username': credentials_to_use[0],
                                     'password': credentials_to_use[1]
                                 }
+                
                 netmiko_structures.append(switch_structure)
             else:
                 logger.error(f"The Stratix switch associated to file {name}backup is not accessible or does not exist")
                 switch_names.remove(name)
     else:
-        # Reset list of switch names, so we can store the serial ports names in it
         switch_names = []
 
         # Build netmiko structures for serial comms
         serial_ports = comports()
         for port in serial_ports:
-            logger.info(f"Checking {port.device} - {port.description}")
+            logger.info(f"Checking {port.description}")
             try:
                 # Configure serial connection (standard Cisco settings)
-                ser = serial.Serial(
+                serial_connection = serial.Serial(
                     port=port.device,
                     baudrate=9600,
                     parity='N',
@@ -165,23 +162,23 @@ def get_structures(logger:Logger, backups_folder, credentials, serial):
                     timeout=2 # Short timeout
                 )
                 
-                # Send a few enters to trigger a response
-                ser.write(b'\r')
+                # Send an enter to trigger a response
+                serial_connection.write(b'\r')
                 time.sleep(1)
                 
                 # Read response
-                response = ser.read(ser.in_waiting).decode('utf-8', errors='ignore')
+                response = serial_connection.read(serial_connection.in_waiting).decode('utf-8', errors='ignore')
                 
                 # Check if it looks like a Cisco prompt
                 if '>' in response or '#' in response or 'User Access' in response:
                     logger.info(f"Cisco device found on {port.device}")
-                    ser.close()
+                    serial_connection.close()
 
                     #Create netmiko structure
                     cisco_serial = {
                         "device_type": "cisco_ios_serial",
-                        "username": credentials[0],
-                        "password": credentials[1],
+                        "username": os.environ["STX_USER"],   # Customize later to allow custom credentials
+                        "password": os.environ["STX_PWD"],   # Customize later to allow custom credentials
                         "fast_cli": False,
                         "serial_settings": {
                             "port": port.device,
@@ -197,7 +194,7 @@ def get_structures(logger:Logger, backups_folder, credentials, serial):
 
                 else:
                     logger.info("No Cisco switch detected.")
-                ser.close()
+                serial_connection.close()
                 
             except Exception as e:
                 # Port might be in use or unauthorized
@@ -250,6 +247,7 @@ def create_logger(test: bool = False) -> Logger:
     log_handler.setFormatter(formatter)
     new_logger.addHandler(log_handler)
     new_logger.setLevel(logging.DEBUG)
+    new_logger.propagate = False
 
     return new_logger
 
@@ -303,3 +301,28 @@ def load_configuration(stratix_file: str, network_device: dict) -> bool:
     except Exception as e:
         log_message(f"An error occurred while loading the configuration: {e}")
         return False
+    
+def get_switch_name(serial_port_name: str) -> str: #update this function to use the credentials entered by customer. These credentials should be an argument of this function
+    cisco_serial = {
+                        "device_type": "cisco_ios_serial",
+                        "username": os.environ["STX_USER"],
+                        "password": os.environ["STX_PWD"],
+                        "fast_cli": False,
+                        "serial_settings": {
+                            "port": serial_port_name,
+                            "baudrate": 9600,
+                            "bytesize": serial.EIGHTBITS,
+                            "parity": serial.PARITY_NONE,
+                            "stopbits": serial.STOPBITS_ONE,
+                        },
+                    }
+    
+    connection = ConnectHandler(**cisco_serial)
+    switch_hostname = connection.send_command("show running-config | include hostname")
+    switch_name = switch_hostname.split(" ")[1]
+
+    return switch_name
+
+def list_serial_ports():
+    ports = comports()
+    return ports
