@@ -68,21 +68,21 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
 
     return (response_config==backup_file, code_error, backup_file, response_config)
 
-def generate_dropdowns(logger: Logger, credentials=[None]*2, serial=False, test: bool = False) -> tuple:
+def generate_dropdowns(logger: Logger, credentials: list = [None]*2, serial: bool = False, test: bool = False) -> tuple:
 
     """
     Generate the dropdown menus for the Stratix Configurator app
 
     Args:
-        source folder (str): The absolute path to the folder where backup config files are located
-        username (str): Switch login username
-        password (str): Switch login password
+        logger (Logger): Logger object that will be used to write diagnostics messages
+        credentials (list): List of 2 elements containing the login credentials
         serial (bool): Flag to indicate if customer is using serial or EtherNet/IP communication
+        test (bool): Flag to indicate if app is running in test mode
 
     Returns:
         A tuple containing:
-            list(str): list with the names of all the Stratix devices with a backup in this folder
-            list(dict): list with the netmiko object structure for each of the Stratix switches
+            list: list with the names of all the Stratix devices with a backup in this folder
+            list: list with the netmiko object structure for each of the Stratix switches
     """
 
     # Test enviorement
@@ -99,8 +99,22 @@ def generate_dropdowns(logger: Logger, credentials=[None]*2, serial=False, test:
     
     return stratix_names, netmiko_structures
 
-def get_structures(logger:Logger, backups_folder, credentials, serial_comms):
+def get_structures(logger:Logger, backups_folder: str, credentials: list, serial_comms: bool) -> tuple:
 
+    """
+    Generate the netmiko structure for a given switch
+    Args:
+        logger (Logger): Logger object that will be used to write diagnostics messages
+        backups_folder (str): Full path to the folder containing the backup config files
+        credentials (list): List of 2 elements containing the login credentials
+        serial (bool): Flag to indicate if customer is using serial or EtherNet/IP communication
+
+    Returns:
+        A tuple containing:
+            list: list with the names of all the Stratix devices with a backup in this folder
+            list: list with the netmiko object structure for each of the Stratix switches
+    """
+    
     ip_mapper = {
         "STX01": "192.168.3.213",
         "STX04": "192.168.3.215",
@@ -214,7 +228,7 @@ def create_logger(test: bool = False) -> Logger:
 
     Returns:
         A tuple containing:
-            logger (Logger): Logger object
+            logger: Logger object
     """
     if not test:
         filepath = "C:/Users/Test/Desktop/Backups/Logs/logs.txt"
@@ -253,7 +267,7 @@ def create_logger(test: bool = False) -> Logger:
 
     return new_logger
 
-def set_credentials(logger: Logger, credentials) -> tuple:
+def set_credentials(logger: Logger, credentials: list) -> tuple[str,str]:
     """
     Sets credentials to be used for switch log in
 
@@ -285,6 +299,18 @@ def set_credentials(logger: Logger, credentials) -> tuple:
     return (switch_username, switch_password)
 
 def load_configuration(stratix_file: str, network_device: dict) -> bool:
+    """
+    Sets credentials to be used for switch log in
+
+    Args:
+        logger (Logger): logs events inside this function
+        credentials (list): list of 2 string containing username and password
+
+    Returns:
+        A tuple containing:
+            str: username
+            str: password
+    """
 
     try:
         connect = ConnectHandler(**network_device)
@@ -305,6 +331,16 @@ def load_configuration(stratix_file: str, network_device: dict) -> bool:
         return False
     
 def get_switch_name(serial_port_name: str) -> str: #update this function to use the credentials entered by customer. These credentials should be an argument of this function
+    """
+    Retrieves the hostname of a switch connected through its console port
+
+    Args:
+        serial_port_name (str): name of the serial port connected to the switch
+
+    Returns:
+        str: name of the switch
+    """
+
     cisco_serial = {
                         "device_type": "cisco_ios_serial",
                         "username": os.environ["STX_USER"],
@@ -325,6 +361,13 @@ def get_switch_name(serial_port_name: str) -> str: #update this function to use 
 
     return switch_name
 
-def list_serial_ports():
+def list_serial_ports() -> list:
+    """
+    Returns a list with the active serial ports in the PC
+
+    Returns:
+        list: list of active serial ports
+    """
+
     ports = comports()
     return ports
