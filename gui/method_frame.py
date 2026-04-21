@@ -10,5 +10,3 @@ class MethodFrame(tk.LabelFrame):
         self.rb1.grid(row=0, column=0, padx=10, pady=10)
         self.rb2 = tk.Radiobutton(parent, text="SSH", variable=controller.var1, value="2", command=controller.select_method)
         self.rb2.grid(row=0, column=1, padx=10, pady=10)
-        self.rb3 = tk.Radiobutton(parent, text="Both", variable=controller.var1, value="3")
-        self.rb3.grid(row=0, column=2, padx=10, pady=10)
