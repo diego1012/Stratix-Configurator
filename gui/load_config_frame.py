@@ -65,7 +65,6 @@ class LoadConfigFrame(tk.LabelFrame):
             # Handle connection status cases
             match result[1]:
                 case 0:
-                    print(f"aki ta: {stratix}") # delete after troubleshooting
                     self.textStatus.set(f"Backup file and configuration are different! {stratix}, if you are sure that you want to load the configuration, please click the Load Configuration button.")
                     self.label_message.config(bg="#F5C227")
                     self.yesBtn.config(state="normal")

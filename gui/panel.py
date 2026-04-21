@@ -8,7 +8,7 @@ from gui.config_frame import ConfigFrame
 from gui.method_frame import MethodFrame
 from gui.serial_frame import SerialFrame
 from gui.load_config_frame import LoadConfigFrame
-from functions.utils import get_switch_name
+from functions.utils import get_switch_name, create_logger
 
 class Panel:
     def __init__(self, test: bool):
@@ -23,8 +23,11 @@ class Panel:
         # Varible for test
         self.test = test
 
-
         self.pixel_art = tk.PhotoImage(file="Images/actualizar.png")
+
+        # Create instance for event logging
+        self.logger = create_logger(self.test)
+
         self.stratixInformation = self.get_options()
 
         # Frame for configuration path
@@ -81,7 +84,8 @@ class Panel:
             self.frameSerial.combo.config(state="normal")
 
     def get_options(self, serial_comms=False) -> list:
-        return generate_dropdowns(test=self.test, serial=serial_comms)
+        logger=self.logger
+        return generate_dropdowns(logger, test=self.test, serial=serial_comms)
 
     def update_options(self, serial_comms=False)-> None:
         self.stratixInformation = self.get_options(serial_comms)
@@ -117,7 +121,6 @@ class Panel:
             self.frameLoadConfig.textStatus.set(f"Checking file and configuration {self.framePath.combo.get()} ...")
             position = self.stratixInformation[0].index(self.framePath.combo.get())
             device = "C:/Users/Test/Desktop/Backups/" + self.stratixInformation[0][position] + "backup"
-        print(device, position)
 
         # Start a new thread to check differences
         threading.Thread(target=self.check_differences_thread, args=(device, self.stratixInformation[1][position])).start()

@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 from functions import log_message
-from functions.utils import list_serial_ports
 import traceback
 
 class SerialFrame(tk.LabelFrame):
@@ -20,6 +19,3 @@ class SerialFrame(tk.LabelFrame):
     def disable_all(self):
         self.combo.config(state="disabled")
         self.updateOptionBtn.config(state="disabled")
-
-    # def update_ports(self):
-    #     self.combo['values'] = 
