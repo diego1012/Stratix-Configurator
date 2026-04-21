@@ -134,7 +134,6 @@ def get_structures(logger:Logger, backups_folder, credentials, serial_comms):
             logger.error(f"Folder {backups_folder} does not exist")
 
         for name in backups_folder_switch_names:
-            print(name)
             if name in ip_mapper.keys():
                 switch_structure = {
                                     'device_type': 'cisco_ios',
@@ -146,7 +145,7 @@ def get_structures(logger:Logger, backups_folder, credentials, serial_comms):
                 netmiko_structures.append(switch_structure)
             else:
                 logger.error(f"The Stratix switch associated to file {name}backup is not accessible or does not exist")
-                
+
     else:
         switch_names = []
 

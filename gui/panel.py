@@ -117,7 +117,6 @@ class Panel:
             self.frameLoadConfig.textStatus.set(f"Checking file and configuration {self.framePath.combo.get()} ...")
             position = self.stratixInformation[0].index(self.framePath.combo.get())
             device = "C:/Users/Test/Desktop/Backups/" + self.stratixInformation[0][position] + "backup"
-        print(device, position)
 
         # Start a new thread to check differences
         threading.Thread(target=self.check_differences_thread, args=(device, self.stratixInformation[1][position])).start()
