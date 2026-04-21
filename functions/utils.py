@@ -68,7 +68,7 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
 
     return (response_config==backup_file, code_error, backup_file, response_config)
 
-def generate_dropdowns(credentials=[None]*2, serial=False, test: bool = False) -> tuple:
+def generate_dropdowns(logger: Logger, credentials=[None]*2, serial=False, test: bool = False) -> tuple:
 
     """
     Generate the dropdown menus for the Stratix Configurator app
@@ -93,7 +93,7 @@ def generate_dropdowns(credentials=[None]*2, serial=False, test: bool = False) -
     else:
         source_folder = os.getcwd() + "/Backups"
 
-    logger = create_logger(test)
+    logger = logger
 
     stratix_names, netmiko_structures = get_structures(logger, source_folder, credentials, serial)
     
@@ -165,15 +165,15 @@ def get_structures(logger:Logger, backups_folder, credentials, serial_comms):
                 )
                 
                 # Send an enter to trigger a response
-                serial_connection.write(b'\r')
+                serial_connection.write(b'\r\n')
                 time.sleep(1)
                 
                 # Read response
                 response = serial_connection.read(serial_connection.in_waiting).decode('utf-8', errors='ignore')
                 
                 # Check if it looks like a Cisco prompt
-                if '>' in response or '#' in response or 'User Access' in response:
-                    logger.info(f"Cisco device found on {port.device}")
+                if '>' in response or '#' in response or 'User Access' or 'Username' in response:
+                    logger.info(f"Possible Cisco device found on {port.device}")
                     serial_connection.close()
 
                     #Create netmiko structure
