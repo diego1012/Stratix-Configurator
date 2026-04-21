@@ -120,17 +120,20 @@ def get_structures(logger:Logger, backups_folder, credentials, serial_comms):
     netmiko_structures = []
 
     if serial_comms == 0:
+        # Create list to store names of available switches
+        switch_names = []
+
         # Build names and netmiko structures for SSH comms
         try:
             logger.info(f"Looking for backup files in {backups_folder}...")
             backup_files = [file for file in os.listdir(backups_folder) if re.fullmatch(filename_pattern, file)!=None]
             logger.info(f"Found {len(backup_files)} valid files")
-            switch_names = [name[:5] for name in backup_files]
+            backups_folder_switch_names = [name[:5] for name in backup_files]
     
         except FileNotFoundError:
             logger.error(f"Folder {backups_folder} does not exist")
 
-        for name in switch_names:
+        for name in backups_folder_switch_names:
             print(name)
             if name in ip_mapper.keys():
                 switch_structure = {
@@ -139,11 +142,11 @@ def get_structures(logger:Logger, backups_folder, credentials, serial_comms):
                                     'username': credentials_to_use[0],
                                     'password': credentials_to_use[1]
                                 }
-                
+                switch_names.append(name)
                 netmiko_structures.append(switch_structure)
             else:
                 logger.error(f"The Stratix switch associated to file {name}backup is not accessible or does not exist")
-                switch_names.remove(name)
+                
     else:
         switch_names = []
 
