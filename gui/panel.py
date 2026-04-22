@@ -108,6 +108,8 @@ class Panel:
         self.frameLoadConfig.disable_all()
         self.framePath.disable_all()
         self.frameSerial.disable_all()
+        self.frameMethod.rb1.config(state="disabled")
+        self.frameMethod.rb2.config(state="disabled")
 
         # Change text message
         self.frameLoadConfig.label_message.config(bg="yellow")

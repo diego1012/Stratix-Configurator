@@ -93,6 +93,8 @@ class LoadConfigFrame(tk.LabelFrame):
         self.noBtn.config(state="disabled")
         self.newWindow.config(state = "disabled")
         self.checkDiffBtn.config(state="active")
+        self.controller.frameMethod.rb1.config(state="normal")
+        self.controller.frameMethod.rb2.config(state="normal")
         if self.controller.var1.get() == 1:
             self.controller.frameSerial.combo.config(state="readonly")
             self.controller.frameSerial.updateOptionBtn.config(state="active")
@@ -123,6 +125,8 @@ class LoadConfigFrame(tk.LabelFrame):
             self.textStatus.set(f"Configuration loaded successfully! {stratix}")
             self.label_message.config(bg="#27F53C")
             self.checkDiffBtn.config(state="active")
+            self.controller.frameMethod.rb1.config(state="normal")
+            self.controller.frameMethod.rb2.config(state="normal")
             if self.controller.var1.get() == 1:
                 self.controller.frameSerial.combo.config(state="readonly")
                 self.controller.frameSerial.updateOptionBtn.config(state="active")
@@ -134,14 +138,19 @@ class LoadConfigFrame(tk.LabelFrame):
                 self.textStatus.set(f"Error loading configuration to {stratix}! Please check the serial connection with {stratix}")
             else:
                 self.textStatus.set(f"Error loading configuration to {stratix}! Please check the connection with {network_device['host']} or ssh configuration")
+
             self.label_message.config(bg="#F53527")
             self.checkDiffBtn.config(state="active")
+
             if self.controller.var1.get() == 1:
                 self.controller.frameSerial.combo.config(state="readonly")
                 self.controller.frameSerial.updateOptionBtn.config(state="active")
             else:
                 self.controller.framePath.combo.config(state="readonly")
                 self.controller.framePath.updateOptionBtn.config(state="active")
+            
+            self.controller.frameMethod.rb1.config(state="normal")
+            self.controller.frameMethod.rb2.config(state="normal")
 
     def open_comparation_window(self, root):
         comparation = tk.Toplevel(root)
