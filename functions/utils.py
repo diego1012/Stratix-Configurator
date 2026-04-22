@@ -186,7 +186,7 @@ def get_structures(logger:Logger, backups_folder: str, credentials: list, serial
                 response = serial_connection.read(serial_connection.in_waiting).decode('utf-8', errors='ignore')
                 
                 # Check if it looks like a Cisco prompt
-                if '>' in response or '#' in response or 'User Access' or 'Username' in response:
+                if '>' in response or '#' in response or 'User Access' in response or 'Username' in response:
                     logger.info(f"Possible Cisco device found on {port.device}")
                     serial_connection.close()
 
