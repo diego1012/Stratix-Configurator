@@ -46,6 +46,8 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
             else:
                 backup_file = [s.replace("\n", "") for s in backup_file[4:]]
 
+            backup_file = [x for x in backup_file if x != '' and x != '!' ]
+
     except FileNotFoundError:
         code_error = 3
 
@@ -61,6 +63,7 @@ def check_difference_config_backup(stratix_backup: str, network_device:dict) -> 
             message = 'show run'    
             response_config = connect.send_command(message, read_timeout= 20).split("\n")
             response_config = response_config[6:-1]
+            response_config = [x for x in response_config if x != '' and x != '!' ]
             connect.disconnect()
 
         except Exception as e:
@@ -117,7 +120,7 @@ def get_structures(logger:Logger, backups_folder: str, credentials: list, serial
     
     ip_mapper = {
         "STX01": "192.168.3.213",
-        "STX04": "192.168.3.215",
+        #"STX04": "192.168.3.215",
         "STX05": "192.168.3.209",
         "STX06": "192.168.3.210",
         "STX07": "192.168.3.211",
@@ -323,6 +326,8 @@ def load_configuration(stratix_file: str, network_device: dict) -> bool:
 
         command = connect.send_config_from_file(config_file=stratix_file)
         
+        print(command)
+
         connect.disconnect()
         return True
     
