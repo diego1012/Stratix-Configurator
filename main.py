@@ -5,11 +5,11 @@ from GUI_Flet import GUI
 import flet as ft
 
 
-test = True
+test = False
 
 if __name__ == "__main__":
     try:
-        ft.app(target=GUI)  # Start the Flet app
+        ft.run(main=GUI)  # Start the Flet app
         #Panel(test).root.mainloop()
     except Exception as e:
         print(traceback.format_exc())

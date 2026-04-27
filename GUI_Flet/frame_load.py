@@ -1,5 +1,5 @@
 import flet as ft
-from functions import check_difference_config_backup, load_configuration
+from functions import check_difference_config_backup, load_configuration, get_switch_name
 from time import sleep
 from threading import Thread
 
@@ -19,14 +19,15 @@ class FrameLoad():
             ],
             actions_alignment=ft.MainAxisAlignment.CENTER,
             on_dismiss=lambda e: print("Modal dialog dismissed!"))
-        
+    
+
         self.button_check = ft.Button(
                                         content="Check Communication",
                                         icon=ft.Icons.CONNECTING_AIRPORTS,
                                         style=ft.ButtonStyle(
                                                 text_style={ft.ControlState.DEFAULT: ft.TextStyle(size=12, weight=ft.FontWeight.BOLD),
                                                             ft.ControlState.DISABLED: ft.TextStyle(size=12)},
-                                                padding=ft.padding.only(top=3, bottom=3),
+                                                padding=ft.padding.symmetric(vertical=3, horizontal=20),
                                                 color={ft.ControlState.DEFAULT: ft.Colors.AMBER_400,
                                                         ft.ControlState.DISABLED: ft.Colors.WHITE_70},
                                                 bgcolor={ft.ControlState.DISABLED: ft.Colors.GREY_900},
@@ -133,7 +134,13 @@ class FrameLoad():
         self.parent.page.run_thread(self.check_configuration_backup)
 
     def check_configuration_backup(self):
-        device = "C:/Users/Test/Desktop/Backups/" + self.parent.stratix_selected + "backup"
+        if self.parent.frame_config.method == 0:
+            com_to_stratix = get_switch_name(self.parent.stratix_selected)
+            device = "C:/Users/Test/Desktop/Backups/" + com_to_stratix + "backup"
+        else:
+            device = "C:/Users/Test/Desktop/Backups/" + self.parent.stratix_selected + "backup"
+
+        print(device, self.parent.stratix_network)
         result = check_difference_config_backup(device, self.parent.stratix_network)
 
         self.parent.view_compare.backup_text = result[2]
@@ -149,7 +156,10 @@ class FrameLoad():
                     self.container_status.bgcolor = ft.Colors.ORANGE_200
                     self.enable_buttons()
                 case 1:
-                    self.text_status.value = "Stratix connection Error! Please check the ethernet connection or SSH configuration"
+                    if self.parent.frame_config.method == 0:
+                        self.text_status.value = "Stratix connection Error! Please check the serial connectionn"
+                    else:
+                        self.text_status.value = "Stratix connection Error! Please check the ethernet connection or SSH configuration"
                     self.container_status.bgcolor = ft.Colors.RED_400
                     self.enable_buttons(1)
                     self.enable_buttons(2)
@@ -170,14 +180,19 @@ class FrameLoad():
         self.text_status.value = "Downloading Configuration"
         self.container_status.bgcolor = ft.Colors.ORANGE_700
         self.disable_buttons()
-        self.parent.frame_path.disable_all()
-        self.parent.frame_serial.disable_all()
-        self.parent.frame_config.disable_all()
+        self.parent.frame_path.enable_disable_dd(True)
+        self.parent.frame_serial.enable_disable_dd(True)
+        self.parent.frame_config.enable_disable_dd(True)
         self.parent.page.run_thread(self.load_configuration_thread)
 
     def load_configuration_thread(self):
 
-        device = "C:/Users/Test/Desktop/Backups/" + self.parent.stratix_selected + "backup"
+        if self.parent.frame_config.method == 0:
+            com_to_stratix = get_switch_name(self.parent.stratix_selected)
+            device = "C:/Users/Test/Desktop/Backups/" + com_to_stratix + "backup"
+        else:
+            device = "C:/Users/Test/Desktop/Backups/" + self.parent.stratix_selected + "backup"
+
         result = load_configuration(device, self.parent.stratix_network)
 
         if result:
@@ -185,13 +200,16 @@ class FrameLoad():
             self.container_status.bgcolor = ft.Colors.GREEN_600
 
         else:
-            self.text_status.value = f"Error loading configuration! {self.parent.stratix_selected}, please check the connection with {self.parent.stratix_network['host']} or ssh configuration"
+            if self.parent.frame_config.method == 0:
+                self.text_status.value = f"Error loading configuration! {self.parent.stratix_selected}, please check the serial connection"
+            else:
+                self.text_status.value = f"Error loading configuration! {self.parent.stratix_selected}, please check the connection with {self.parent.stratix_network['host']} or ssh configuration"
             self.container_status.bgcolor = ft.Colors.RED_600
 
         self.enable_buttons()
-        self.parent.frame_path.enable_all()
-        self.parent.frame_serial.enable_all()
-        self.parent.frame_config.enable_all()
+        self.parent.frame_path.enable_disable_dd(False)
+        self.parent.frame_serial.enable_disable_dd(False)
+        self.parent.frame_config.enable_disable_dd(False)
 
     def disable_buttons(self, b_disable: int = None):
         if b_disable == 1 or b_disable == None:

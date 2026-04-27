@@ -1,7 +1,7 @@
 import flet as ft
 
 def get_options() -> list[ft.DropdownOption]:
-    stratix = ["Serial", "SSH", "Both"]
+    stratix = ["Serial", "SSH"]
     return [
         ft.DropdownOption(
             key=st,
@@ -16,13 +16,14 @@ class FrameConfig():
 
         self.parent = parent
         self.status_dd = True
+        self.method = 0
 
         self.dd = ft.Dropdown(
-                        editable=True,
+                        editable=False,
                         label="Method",
                         options=get_options(),
-                        disabled= True,
-                        on_select=self.handle_dropdown_select
+                        on_select=self.handle_dropdown_select,
+                        value="Serial"
                         )
 
         self.container = ft.Stack([
@@ -48,10 +49,21 @@ class FrameConfig():
             ])
         
     def handle_dropdown_select(self, e: ft.Event[ft.Dropdown]):
+        
         if e.control.value == 'Serial':
             self.parent.frame_serial.enable_disable_dd(False)
+            self.parent.frame_path.enable_disable_dd(True)
+            self.parent.frame_path.reset_dropdown()
+            if self.method != 0:
+                self.method = 0
+                self.parent.frame_path.reset_dropdown()
+
         else:
             self.parent.frame_serial.enable_disable_dd(True)
+            self.parent.frame_path.enable_disable_dd(False)
+            if self.method == 0:
+                self.method = 1
+                self.parent.frame_path.reset_dropdown()
 
     def update_frame(self):
         self.dd.update()
@@ -59,11 +71,3 @@ class FrameConfig():
     def enable_disable_dd(self,action: bool):
         self.dd.disabled = action
         self.update_frame()
-
-    def disable_all(self):
-        self.container.disabled = True
-        self.parent.page.update()
-
-    def enable_all(self):
-        self.container.disabled = False
-        self.parent.page.update()
