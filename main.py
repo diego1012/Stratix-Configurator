@@ -1,4 +1,3 @@
-from gui.panel import Panel
 import traceback
 from functions import log_message
 from GUI_Flet import GUI
