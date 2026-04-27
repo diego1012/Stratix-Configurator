@@ -6,7 +6,7 @@ import time
 
 from logging import Logger
 from os import path
-from netmiko import ConnectHandler
+from netmiko import ConnectHandler, file_transfer
 from serial.tools.list_ports_windows import comports
 from .log import log_message
 
@@ -324,9 +324,19 @@ def load_configuration(stratix_file: str, network_device: dict) -> bool:
             switch_name = switch_hostname.split(" ")[1]
             stratix_file = path.join(BACKUPS_FILEPATH, f"{switch_name}backup")
 
-        command = connect.send_config_from_file(config_file=stratix_file)
-        
-        print(command)
+        # command = connect.send_config_from_file(config_file=stratix_file)
+
+        results = file_transfer(connect, 
+                                source_file=stratix_file,
+                                dest_file=f"{switch_name}backup.txt",
+                                file_system="flash",
+                                direction="put",
+                                overwrite_file=True
+                               )
+        print(results) # delete after tr
+
+        command = connect.send_command(f"configure replace flash:{switch_name}backup.txt")
+        command = connect.send_command("copy running-config startup-config")
 
         connect.disconnect()
         return True
