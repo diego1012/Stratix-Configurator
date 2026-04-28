@@ -9,7 +9,7 @@ class FrameSerial():
         self.parent = parent
         self.port_data = None
 
-        self.stratix_information = generate_dropdowns(logger= self.parent.logger, serial = True, test = True)
+        self.stratix_information = generate_dropdowns(logger = self.parent.logger, serial = True, test = True)
 
         self.dd = ft.Dropdown(
                         editable=False,
@@ -91,7 +91,7 @@ class FrameSerial():
     def loading_message(self):
         self.dd.value = None
         self.port_data = None
-        self.stratix_information = generate_dropdowns(logger= self.parent.logger, serial = True, test = True)
+        self.stratix_information = generate_dropdowns(logger = self.parent.logger, serial = True, test = True)
         self.dd.options = self.get_options()
         self.dd.update()
         sleep(3)

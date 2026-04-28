@@ -323,6 +323,8 @@ def load_configuration(stratix_file: str, network_device: dict) -> bool:
             switch_hostname = connect.send_command("show running-config | include hostname")
             switch_name = switch_hostname.split(" ")[1]
             stratix_file = path.join(BACKUPS_FILEPATH, f"{switch_name}backup")
+        else:
+            switch_name = stratix_file[-11:-7]
 
         # command = connect.send_config_from_file(config_file=stratix_file)
 

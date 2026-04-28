@@ -9,7 +9,7 @@ class FramePath:
 
         self.parent = parent
 
-        self.stratix_information = generate_dropdowns(logger= self.parent.logger, test = True)
+        self.stratix_information = generate_dropdowns(logger=self.parent.logger, test=True)
 
         self.dd = ft.Dropdown(
                         editable=False,
@@ -91,7 +91,7 @@ class FramePath:
                 
     def reset_dropdown(self):
         self.dd.value = None
-        self.stratix_information = generate_dropdowns(logger= self.parent.logger, test=True)
+        self.stratix_information = generate_dropdowns(logger=self.parent.logger, test=True)
         self.dd.options = self.get_options()
         self.dd.update()
         #self.parent.frame_serial.enable_disable_dd(True)
