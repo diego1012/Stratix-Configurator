@@ -193,7 +193,7 @@ class FrameLoad():
         else:
             device = "C:/Users/Test/Desktop/Backups/" + self.parent.stratix_selected + "backup"
 
-        result = load_configuration(device, self.parent.stratix_network)
+        result = load_configuration(device, self.parent.stratix_network, self.parent.logger)
 
         if result:
             self.text_status.value = f"Configuration loaded successfully! {self.parent.stratix_selected}"
