@@ -6,7 +6,7 @@ import time
 
 from logging import Logger
 from os import path
-from netmiko import ConnectHandler
+from netmiko import ConnectHandler, file_transfer, ReadTimeout
 from serial.tools.list_ports_windows import comports
 from .log import log_message
 
@@ -301,18 +301,17 @@ def set_credentials(logger: Logger, credentials: list) -> tuple[str,str]:
 
     return (switch_username, switch_password)
 
-def load_configuration(stratix_file: str, network_device: dict) -> bool:
+def load_configuration(stratix_file: str, network_device: dict, logger: Logger) -> bool:
     """
-    Sets credentials to be used for switch log in
+    Loads the content of the backup configuration file on the switch
 
     Args:
+        stratix_file (str): absolute path to the backup file
+        network_device (dict): netmiko structure of the switch we want to load the configuration to
         logger (Logger): logs events inside this function
-        credentials (list): list of 2 string containing username and password
 
     Returns:
-        A tuple containing:
-            str: username
-            str: password
+        bool: Flag indicating if the load was successful or if there were errors
     """
 
     try:
@@ -321,12 +320,32 @@ def load_configuration(stratix_file: str, network_device: dict) -> bool:
 
         if network_device["device_type"] == "cisco_ios_serial":
             switch_hostname = connect.send_command("show running-config | include hostname")
-            switch_name = switch_hostname.split(" ")[1]
-            stratix_file = path.join(BACKUPS_FILEPATH, f"{switch_name}backup")
+            backup_file_name = switch_hostname.split(" ")[1] + "backup"
+        else:
+            backup_file_name = stratix_file.split("/")[-1] # get switch name from filepath
 
-        command = connect.send_config_from_file(config_file=stratix_file)
-        
-        print(command)
+        switch_name = backup_file_name[:5]
+
+        logger.info(f"Copying file {backup_file_name} to startup-config of switch {switch_name}...")
+        output = connect.send_command_timing(f"copy flash:{backup_file_name} startup-config")
+        if "Destination filename" in output:
+            connect.send_command_timing("\n")
+
+        output = connect.send_command_timing("reload")
+        print(output)
+        if "yes" in output:
+            try:
+                connect.send_command_timing("yes", read_timeout=2)
+                logger.info("Reload command sent")
+            except ReadTimeout:
+                logger.info(f"Reloading {switch_name}...")
+
+        elif 'confirm' in output:
+            try:
+                connect.send_command_timing('\n', read_timeout=2)
+                logger.info("Reload command sent")
+            except ReadTimeout:
+                logger.info(f"Reloading {switch_name}...")
 
         connect.disconnect()
         return True
