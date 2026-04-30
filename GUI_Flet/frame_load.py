@@ -1,5 +1,5 @@
 import flet as ft
-from functions import check_difference_config_backup, load_configuration, get_switch_name
+from functions import check_difference_config_backup, load_configuration, get_switch_name, checking_communication
 from time import sleep
 from threading import Thread
 
@@ -97,6 +97,7 @@ class FrameLoad():
                     alignment=ft.MainAxisAlignment.CENTER,
                     controls=[
                             ft.Row(
+                            alignment=ft.MainAxisAlignment.CENTER,
                             controls=[ft.Column(
                                     margin=ft.margin.symmetric(horizontal=30),
                                     controls=[self.button_check, 
@@ -140,7 +141,6 @@ class FrameLoad():
         else:
             device = "C:/Users/Test/Desktop/Backups/" + self.parent.stratix_selected + "backup"
 
-        print(device, self.parent.stratix_network)
         result = check_difference_config_backup(device, self.parent.stratix_network)
 
         self.parent.view_compare.backup_text = result[2]
@@ -149,6 +149,7 @@ class FrameLoad():
         if result[0]:
             self.text_status.value = "File and configuration are the same!"
             self.container_status.bgcolor = ft.Colors.GREEN
+            self.enable_buttons(1)
         else:
             match result[1]:
                 case 0:
@@ -196,14 +197,41 @@ class FrameLoad():
         result = load_configuration(device, self.parent.stratix_network, self.parent.logger)
 
         if result:
-            self.text_status.value = f"Configuration loaded successfully! {self.parent.stratix_selected}"
-            self.container_status.bgcolor = ft.Colors.GREEN_600
+            self.text_status.value = f"Configuration loaded successfully Waiting to restart the device! {self.parent.stratix_selected}"
+            self.container_status.bgcolor = ft.Colors.AMBER_600
+            self.parent.page.update()
+            if self.parent.frame_config.method == 0:
+                self.parent.page.run_thread(self.check_communication_update, com_to_stratix)
+            else:
+                self.parent.page.run_thread(self.check_communication_update, self.parent.stratix_selected)
 
         else:
             if self.parent.frame_config.method == 0:
                 self.text_status.value = f"Error loading configuration! {self.parent.stratix_selected}, please check the serial connection"
             else:
                 self.text_status.value = f"Error loading configuration! {self.parent.stratix_selected}, please check the connection with {self.parent.stratix_network['host']} or ssh configuration"
+            self.container_status.bgcolor = ft.Colors.RED_600
+
+            self.enable_buttons()
+            self.parent.frame_path.enable_disable_dd(False)
+            self.parent.frame_serial.enable_disable_dd(False)
+            self.parent.frame_config.enable_disable_dd(False)
+
+    def check_communication_update(self, stratix_name: str):
+
+        contador = 0
+
+        while contador < 180:
+            sleep(1)
+            contador +=1
+
+        check_comm = checking_communication(stratix_name)
+
+        if check_comm:
+            self.text_status.value = f"Device available! {self.parent.stratix_selected}"
+            self.container_status.bgcolor = ft.Colors.GREEN_600
+        else:
+            self.text_status.value = f"Error communicating with the device {self.parent.stratix_selected}, please check the Stratix"
             self.container_status.bgcolor = ft.Colors.RED_600
 
         self.enable_buttons()

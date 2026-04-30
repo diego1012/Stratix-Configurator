@@ -3,6 +3,7 @@ import os
 import re
 import serial
 import time
+import subprocess
 
 from logging import Logger
 from os import path
@@ -347,13 +348,42 @@ def load_configuration(stratix_file: str, network_device: dict, logger: Logger) 
             except ReadTimeout:
                 logger.info(f"Reloading {switch_name}...")
 
-        connect.disconnect()
+        #connect.disconnect()
         return True
     
     except Exception as e:
         log_message(f"An error occurred while loading the configuration: {e}")
         return False
+
+def checking_communication(name: str) -> bool:
     
+    ip_mapper = {
+        "STX01": "192.168.3.213",
+        #"STX04": "192.168.3.215",
+        "STX05": "192.168.3.209",
+        "STX06": "192.168.3.210",
+        "STX07": "192.168.3.211",
+        "STX08": "192.168.3.212",
+        "STX12": "192.168.3.206",
+        "STX13": "192.168.3.207",
+        "STX14": "179.254.0.1",
+    }
+
+    command = ['ping', '-n', '1', ip_mapper[name]]
+
+    counter = 0
+
+    while counter < 3:
+        subprocess_result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if subprocess_result.returncode == 0:
+            return True
+        else:
+            counter +=1
+            time.sleep(2)
+
+    return False
+
+
 def get_switch_name(serial_port_name: str) -> str: #update this function to use the credentials entered by customer. These credentials should be an argument of this function
     """
     Retrieves the hostname of a switch connected through its console port
