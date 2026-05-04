@@ -4,17 +4,8 @@ This tool was developed to simplify the re-configuration process of the Stratix 
 
 Hopefully this tool will save us time and headaches and let our team focus on the real replication and testing tasks. <br>
 
-## Worskpace settings
-
-v1.0.0 requires the creation of two environment variables:
-- STX_USER
-- STX_PWD<br>
-
-We plan to add a functionality for custom credentials in the next release.<br>
-
-## Creation of .exe file
-
-If you are contributing to the app, you can use the following command in your workspace to create the .exe file:
-```
-pyinstaller --onefile --noconsole --icon=Images/RA.ico  main.py
-```
+## Contents
+- [Workspace settings](docs/ws-settings.md)
+- [Backup files](docs/backups.md)
+- [Tutorial](docs/tutorial.md)
+- [Troubleshooting](docs/troubleshooting.md)
